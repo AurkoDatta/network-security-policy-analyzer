@@ -1,0 +1,53 @@
+# Redis is intentionally omitted here — nothing in Phase 1 needs a job
+# queue yet. It gets added back once async/background analysis (Phase 2+)
+# needs it.
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  api:
+    build:
+      context: ./api
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      # .env's MONGODB_URI points at localhost, which is only correct for
+      # non-Docker local dev. Inside compose, the API must reach Mongo via
+      # the service name instead.
+      MONGODB_URI: mongodb://mongo:27017/analyzer
+      API_PORT: ${API_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE}
+      ANALYSIS_TIMEOUT: ${ANALYSIS_TIMEOUT}
+      FRONTEND_PORT: ${FRONTEND_PORT}
+    ports:
+      - "${API_PORT}:${API_PORT}"
+
+  analyzer:
+    build:
+      context: ./analyzer
+    restart: unless-stopped
+    environment:
+      ANALYZER_PORT: ${ANALYZER_PORT}
+      FRONTEND_PORT: ${FRONTEND_PORT}
+      ANALYSIS_TIMEOUT: ${ANALYSIS_TIMEOUT}
+    ports:
+      - "${ANALYZER_PORT}:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${FRONTEND_PORT}:80"
+
+volumes:
+  mongo_data:
