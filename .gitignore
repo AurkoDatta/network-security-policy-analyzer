@@ -35,3 +35,9 @@ htmlcov/
 # Editor
 .vscode/
 .idea/
+
+# Local planning notes (not part of the published project)
+Claude.md
+prompt.txt
+GETTING_STARTED.md
+PRD-personal-os.md
