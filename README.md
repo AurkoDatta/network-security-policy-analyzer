@@ -258,4 +258,4 @@ For issues, questions, or suggestions, open an issue on GitHub.
 
 ---
 
-**Getting Started Development:** Read `Claude.md` and `prompt.txt` for implementation details and development milestones.
+**Getting Started Development:** See `docs/architecture.md` for system design details.
