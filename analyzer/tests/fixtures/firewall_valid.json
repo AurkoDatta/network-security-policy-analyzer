@@ -1,0 +1,15 @@
+{
+  "rules": [
+    {
+      "name": "allow-https",
+      "protocol": "tcp",
+      "port_start": 443,
+      "port_end": 443,
+      "direction": "ingress",
+      "action": "allow",
+      "source": { "type": "cidr", "value": "0.0.0.0/0" },
+      "destination": { "type": "cidr", "value": "10.0.2.0/24" },
+      "tags": { "env": "prod" }
+    }
+  ]
+}

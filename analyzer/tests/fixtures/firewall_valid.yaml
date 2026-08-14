@@ -1,0 +1,35 @@
+rules:
+  - name: allow-ssh-internal
+    protocol: tcp
+    port_start: 22
+    port_end: 22
+    direction: ingress
+    action: allow
+    source:
+      type: cidr
+      value: 10.0.0.0/8
+    destination:
+      type: cidr
+      value: 10.0.1.0/24
+    description: SSH from internal network
+  - name: deny-telnet
+    protocol: tcp
+    port: 23
+    direction: ingress
+    action: deny
+    source:
+      type: cidr
+      value: 0.0.0.0/0
+    destination:
+      type: cidr
+      value: 10.0.1.0/24
+  - name: allow-any-egress
+    protocol: any
+    direction: egress
+    action: allow
+    source:
+      type: cidr
+      value: 10.0.1.0/24
+    destination:
+      type: cidr
+      value: 0.0.0.0/0
