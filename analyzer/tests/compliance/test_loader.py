@@ -46,3 +46,8 @@ def test_loads_valid_custom_ruleset():
 def test_rejects_malformed_custom_ruleset():
     with pytest.raises(ValueError):
         load_custom_ruleset(b"not valid json [[[")
+
+
+def test_rejects_custom_ruleset_that_is_not_a_json_array():
+    with pytest.raises(ValueError, match="must be a JSON array"):
+        load_custom_ruleset(b'{"framework": "custom"}')

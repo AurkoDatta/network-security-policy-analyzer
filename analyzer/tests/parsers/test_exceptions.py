@@ -25,3 +25,13 @@ def test_parse_json_or_yaml_parses_yaml():
 def test_parse_json_or_yaml_raises_on_garbage():
     with pytest.raises(ParserError, match="could not be parsed"):
         parse_json_or_yaml(b"{not: valid: json: or: yaml: [[[")
+
+
+def test_parse_json_or_yaml_raises_when_yaml_parses_to_bare_scalar():
+    with pytest.raises(ParserError, match="empty or invalid content"):
+        parse_json_or_yaml(b"just a plain unquoted string")
+
+
+def test_parse_json_or_yaml_raises_on_empty_input():
+    with pytest.raises(ParserError, match="empty or invalid content"):
+        parse_json_or_yaml(b"")

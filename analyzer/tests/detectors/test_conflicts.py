@@ -66,3 +66,37 @@ def test_no_conflict_across_different_destinations():
     rule2 = _rule("r2", 22, 22, "allow", destination=Endpoint(type="cidr", value="10.0.2.0/24"))
     conflicts = detect_conflicts([rule1, rule2])
     assert conflicts == []
+
+
+def test_no_conflict_across_different_sources():
+    rule1 = _rule("r1", 22, 22, "allow", source=Endpoint(type="cidr", value="10.0.0.0/8"))
+    rule2 = _rule("r2", 22, 22, "allow", source=Endpoint(type="cidr", value="192.168.0.0/16"))
+    conflicts = detect_conflicts([rule1, rule2])
+    assert conflicts == []
+
+
+def test_no_conflict_across_different_non_any_protocols():
+    rule1 = _rule("r1", 22, 22, "allow", protocol="tcp")
+    rule2 = _rule("r2", 22, 22, "allow", protocol="udp")
+    conflicts = detect_conflicts([rule1, rule2])
+    assert conflicts == []
+
+
+def test_conflict_when_both_port_ranges_are_none():
+    rule1 = NormalizedRule(
+        id="r1",
+        source_type="iam_policy",
+        source_id="pol-1",
+        protocol="any",
+        port_range=None,
+        direction="ingress",
+        action="allow",
+        source=Endpoint(type="principal", value="*"),
+        destination=Endpoint(type="principal", value="arn:aws:s3:::bucket"),
+        created_at=datetime(2026, 1, 1),
+        modified_at=datetime(2026, 1, 1),
+    )
+    rule2 = rule1.model_copy(update={"id": "r2", "action": "deny"})
+    conflicts = detect_conflicts([rule1, rule2])
+    assert len(conflicts) == 1
+    assert conflicts[0].type == "contradiction"

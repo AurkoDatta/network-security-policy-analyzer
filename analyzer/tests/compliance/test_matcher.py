@@ -70,3 +70,21 @@ def test_no_match_when_rule_has_no_port_range_but_matcher_requires_port():
     rule = _rule(port_range=None)
     compliance_rule = _compliance_rule()
     assert matches(rule, compliance_rule) is False
+
+
+def test_no_match_when_protocol_differs():
+    rule = _rule(protocol="udp")
+    compliance_rule = _compliance_rule()
+    assert matches(rule, compliance_rule) is False
+
+
+def test_no_match_when_destination_not_contained_in_cidr():
+    rule = _rule(destination=Endpoint(type="cidr", value="10.0.1.0/24"))
+    compliance_rule = _compliance_rule(destination="192.168.1.0/24")
+    assert matches(rule, compliance_rule) is False
+
+
+def test_cidr_matches_falls_back_to_string_equality_on_invalid_cidr():
+    rule = _rule(source=Endpoint(type="cidr", value="not-a-cidr"))
+    compliance_rule = _compliance_rule(source="not-a-cidr")
+    assert matches(rule, compliance_rule) is True

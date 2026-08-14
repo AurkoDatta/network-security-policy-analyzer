@@ -71,6 +71,25 @@ def test_overall_is_weighted_combination():
     assert score.overall == expected
 
 
+def test_exposure_counts_scoped_rule_on_critical_port():
+    rules = [
+        _rule(
+            port_range=PortRange(start=22, end=22),
+            source=Endpoint(type="cidr", value="10.0.0.0/8"),
+            modified_at=datetime(2025, 12, 1),
+        )
+    ]
+    score = score_rules(rules, as_of=datetime(2026, 1, 1))
+    assert score.permissiveness == 0
+    assert score.exposure == 100
+
+
+def test_exposure_is_zero_when_rule_has_no_port_range():
+    rules = [_rule(port_range=None, modified_at=datetime(2025, 12, 1))]
+    score = score_rules(rules, as_of=datetime(2026, 1, 1))
+    assert score.exposure == 0
+
+
 def test_empty_ruleset_scores_zero():
     score = score_rules([], as_of=datetime(2026, 1, 1))
     assert score.overall == 0

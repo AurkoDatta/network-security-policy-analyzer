@@ -53,3 +53,49 @@ def test_rejects_oversized_file():
     raw = b"[" + b"1" * (10 * 1024 * 1024 + 1) + b"]"
     with pytest.raises(ParserError, match="exceeds maximum size"):
         parse_aws_security_group(raw)
+
+
+def test_parses_single_group_object_not_wrapped_in_a_list():
+    raw = b"""
+    {
+      "GroupId": "sg-single",
+      "IpPermissions": [
+        { "IpProtocol": "tcp", "FromPort": 80, "ToPort": 80, "IpRanges": [{ "CidrIp": "0.0.0.0/0" }] }
+      ]
+    }
+    """
+    rules = parse_aws_security_group(raw)
+    assert len(rules) == 1
+    assert rules[0].source_id == "sg-single"
+
+
+def test_parses_security_group_source_endpoint():
+    raw = b"""
+    [
+      {
+        "GroupId": "sg-referrer",
+        "IpPermissions": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "UserIdGroupPairs": [{ "GroupId": "sg-database" }]
+          }
+        ]
+      }
+    ]
+    """
+    rules = parse_aws_security_group(raw)
+    assert len(rules) == 1
+    assert rules[0].source.type == "security_group"
+    assert rules[0].source.value == "sg-database"
+
+
+def test_rejects_top_level_non_object_non_list():
+    with pytest.raises(ParserError, match="object or a list"):
+        parse_aws_security_group(b"42")
+
+
+def test_rejects_group_missing_group_id():
+    with pytest.raises(ParserError, match="GroupId"):
+        parse_aws_security_group(b'[{"IpPermissions": []}]')

@@ -54,3 +54,42 @@ def test_rejects_oversized_file():
     raw = b'{"rules": [' + b"1" * (10 * 1024 * 1024 + 1) + b"]}"
     with pytest.raises(ParserError, match="exceeds maximum size"):
         parse_generic_firewall(raw)
+
+
+def test_rejects_rules_field_that_is_not_a_list():
+    with pytest.raises(ParserError, match="must be a list"):
+        parse_generic_firewall(b'{"rules": "not-a-list"}')
+
+
+def test_rejects_rule_missing_source_field():
+    raw = b"""
+    {
+      "rules": [
+        {
+          "name": "broken",
+          "protocol": "tcp",
+          "direction": "ingress",
+          "destination": { "type": "cidr", "value": "10.0.0.0/8" }
+        }
+      ]
+    }
+    """
+    with pytest.raises(ParserError, match="missing required field 'source'"):
+        parse_generic_firewall(raw)
+
+
+def test_rejects_rule_missing_protocol_field():
+    raw = b"""
+    {
+      "rules": [
+        {
+          "name": "broken",
+          "direction": "ingress",
+          "source": { "type": "cidr", "value": "0.0.0.0/0" },
+          "destination": { "type": "cidr", "value": "10.0.0.0/8" }
+        }
+      ]
+    }
+    """
+    with pytest.raises(ParserError, match="malformed"):
+        parse_generic_firewall(raw)

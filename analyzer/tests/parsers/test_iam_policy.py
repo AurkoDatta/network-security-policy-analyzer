@@ -55,3 +55,15 @@ def test_rejects_oversized_file():
     raw = b'{"Statement": [' + b"1" * (10 * 1024 * 1024 + 1) + b"]}"
     with pytest.raises(ParserError, match="exceeds maximum size"):
         parse_iam_policy(raw)
+
+
+def test_rejects_statement_missing_effect():
+    raw = b'{"Statement": [{"Resource": "arn:aws:s3:::bucket"}]}'
+    with pytest.raises(ParserError, match="malformed"):
+        parse_iam_policy(raw)
+
+
+def test_rejects_statement_missing_resource():
+    raw = b'{"Statement": [{"Effect": "Allow", "Action": "s3:GetObject"}]}'
+    with pytest.raises(ParserError, match="malformed"):
+        parse_iam_policy(raw)
