@@ -1,0 +1,16 @@
+[
+  {
+    "framework": "hipaa",
+    "rule_id": "HIPAA-164.312-a1",
+    "description": "Database ports handling PHI must not be exposed to 0.0.0.0/0",
+    "matcher": { "ports": [5432, 3306, 27017], "source": "0.0.0.0/0" },
+    "severity": "critical"
+  },
+  {
+    "framework": "hipaa",
+    "rule_id": "HIPAA-164.312-e1",
+    "description": "Unencrypted protocol (telnet) must not be permitted",
+    "matcher": { "protocol": "tcp", "ports": [23] },
+    "severity": "high"
+  }
+]

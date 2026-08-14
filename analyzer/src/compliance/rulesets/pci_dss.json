@@ -1,0 +1,16 @@
+[
+  {
+    "framework": "pci_dss",
+    "rule_id": "PCI-1.2.1",
+    "description": "Cardholder data environment must not allow inbound traffic from 0.0.0.0/0 on database ports",
+    "matcher": { "ports": [3306, 5432, 1433], "source": "0.0.0.0/0" },
+    "severity": "critical"
+  },
+  {
+    "framework": "pci_dss",
+    "rule_id": "PCI-2.2.2",
+    "description": "Insecure services (telnet, ftp) must be disabled",
+    "matcher": { "protocol": "tcp", "ports": [21, 23] },
+    "severity": "high"
+  }
+]
