@@ -3,8 +3,10 @@ import multer from 'multer';
 import { z } from 'zod';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { env } from '../config/env';
+import { Analysis } from '../models/Analysis';
 import { Policy } from '../models/Policy';
-import { parsePolicyViaAnalyzer } from '../services/analyzerClient';
+import { analyzeRulesViaAnalyzer, parsePolicyViaAnalyzer } from '../services/analyzerClient';
+import { emitProgress } from '../websocket/server';
 
 export const policiesRouter = Router();
 
@@ -97,4 +99,36 @@ policiesRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): 
   }
   await policy.deleteOne();
   res.status(204).send();
+});
+
+policiesRouter.post('/:id/analyze', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const policy = await Policy.findById(req.params.id);
+  if (!policy) {
+    res.status(404).json({ error: 'Policy not found' });
+    return;
+  }
+  if (policy.user_id !== req.userId) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+
+  const complianceFrameworks = ['cis', 'hipaa', 'pci_dss'];
+
+  try {
+    emitProgress(policy.id, 'sending_to_analyzer', 25);
+    const { risk_score, findings } = await analyzeRulesViaAnalyzer(policy.normalized_rules, complianceFrameworks);
+    emitProgress(policy.id, 'scoring_complete', 75);
+
+    const analysis = await Analysis.create({
+      policy_id: policy._id,
+      risk_score,
+      findings,
+    });
+    emitProgress(policy.id, 'complete', 100);
+
+    res.status(201).json(analysis);
+  } catch (err) {
+    emitProgress(policy.id, 'failed', 100);
+    res.status(502).json({ error: (err as Error).message });
+  }
 });

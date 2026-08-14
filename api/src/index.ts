@@ -1,12 +1,17 @@
+import http from 'http';
 import { createApp } from './app';
 import { connectDb } from './config/db';
 import { env } from './config/env';
+import { attachSocketIO } from './websocket/server';
 
 async function main(): Promise<void> {
   await connectDb();
 
   const app = createApp();
-  app.listen(env.apiPort, () => {
+  const server = http.createServer(app);
+  attachSocketIO(server);
+
+  server.listen(env.apiPort, () => {
     console.log(`API listening on port ${env.apiPort}`);
   });
 }
