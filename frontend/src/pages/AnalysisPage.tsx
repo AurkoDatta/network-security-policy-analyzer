@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAnalysis } from '../hooks/useAnalysis';
+import { usePolicy } from '../hooks/usePolicies';
 import { FindingsTable } from '../components/FindingsTable';
 import { FindingFilters } from '../components/FindingFilters';
 import { RuleDetailPanel } from '../components/RuleDetailPanel';
 import { RiskGauge } from '../components/RiskGauge';
 import { ComplianceChart } from '../components/ComplianceChart';
+import { NetworkDiagram } from '../components/NetworkDiagram';
+import { RiskMatrix } from '../components/RiskMatrix';
 import type { Finding, NormalizedRule } from '../types/api';
 
 export function AnalysisPage() {
   const { id } = useParams<{ id: string }>();
   const { data: analysis, isLoading, error } = useAnalysis(id);
+  const { data: policy } = usePolicy(analysis?.policy_id);
   const [filtered, setFiltered] = useState<Finding[]>([]);
   const [selectedRule, setSelectedRule] = useState<NormalizedRule | null>(null);
 
@@ -18,9 +22,11 @@ export function AnalysisPage() {
   if (error) return <p className="p-8 text-red-600">{(error as Error).message}</p>;
   if (!analysis) return null;
 
-  const handleSelect = (ruleId: string) => {
-    setSelectedRule(null);
-    void ruleId;
+  const rules = policy?.normalized_rules ?? [];
+
+  const handleSelectByRuleId = (ruleId: string) => {
+    const rule = rules.find((r) => r.id === ruleId);
+    setSelectedRule(rule ?? null);
   };
 
   return (
@@ -30,8 +36,10 @@ export function AnalysisPage() {
         <RiskGauge score={analysis.risk_score} />
         <ComplianceChart findings={analysis.findings} />
       </div>
+      <RiskMatrix findings={analysis.findings} rules={rules} />
+      <NetworkDiagram rules={rules} findings={analysis.findings} onSelectRule={setSelectedRule} />
       <FindingFilters findings={analysis.findings} onFilterChange={setFiltered} />
-      <FindingsTable findings={filtered} onSelect={handleSelect} />
+      <FindingsTable findings={filtered} onSelect={handleSelectByRuleId} />
       <RuleDetailPanel rule={selectedRule} onClose={() => setSelectedRule(null)} />
     </div>
   );

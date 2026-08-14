@@ -37,6 +37,10 @@ export async function deletePolicy(token: string, id: string): Promise<void> {
   return apiFetch(`/api/policies/${id}`, { method: 'DELETE' }, token);
 }
 
+export async function getPolicy(token: string, id: string): Promise<Policy> {
+  return apiFetch(`/api/policies/${id}`, {}, token);
+}
+
 export async function getAnalysis(token: string, id: string): Promise<Analysis> {
   return apiFetch(`/api/analyses/${id}`, {}, token);
 }

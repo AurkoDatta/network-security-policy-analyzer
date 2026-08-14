@@ -1766,7 +1766,7 @@ describe('NetworkDiagram', () => {
     render(<NetworkDiagram rules={RULES} findings={FINDINGS} onSelectRule={vi.fn()} />);
 
     expect(cytoscape).toHaveBeenCalled();
-    const config = vi.mocked(cytoscape).mock.calls[0][0] as { elements: unknown[] };
+    const config = vi.mocked(cytoscape).mock.calls[0][0] as unknown as { elements: unknown[] };
     expect(config.elements.length).toBeGreaterThan(0);
   });
 
