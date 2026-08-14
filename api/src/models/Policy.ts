@@ -8,6 +8,7 @@ export interface PolicyDocument extends Document {
   source_type: 'aws' | 'firewall' | 'iam';
   raw_content: string;
   normalized_rules: NormalizedRule[];
+  content_hash: string;
   tags: string[];
   created_at: Date;
   updated_at: Date;
@@ -25,11 +26,13 @@ const PolicySchema = new Schema<PolicyDocument>(
     },
     raw_content: { type: String, required: true },
     normalized_rules: { type: [NormalizedRuleSchema], default: [] },
+    content_hash: { type: String, required: true },
     tags: { type: [String], default: [] },
   },
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } },
 );
 
 PolicySchema.index({ user_id: 1, created_at: -1 });
+PolicySchema.index({ content_hash: 1 });
 
 export const Policy = model<PolicyDocument>('Policy', PolicySchema);

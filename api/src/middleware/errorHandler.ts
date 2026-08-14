@@ -14,6 +14,12 @@ export function errorHandler(
     next(err);
     return;
   }
-  console.error(err);
+  console.error({
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    path: req.path,
+    message: err.message,
+    stack: err.stack,
+  });
   res.status(500).json({ error: 'Internal server error' });
 }

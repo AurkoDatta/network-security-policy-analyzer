@@ -1,4 +1,5 @@
 """Loads bundled compliance rulesets (CIS/HIPAA/PCI-DSS) and custom rulesets."""
+import functools
 import json
 from pathlib import Path
 from typing import Literal, Optional
@@ -25,8 +26,14 @@ class ComplianceRule(BaseModel):
     severity: Literal["critical", "high", "medium", "low"]
 
 
+@functools.lru_cache(maxsize=None)
 def load_ruleset(framework: str) -> list[ComplianceRule]:
-    """Load a bundled compliance ruleset by framework name (cis, hipaa, pci_dss)."""
+    """Load a bundled compliance ruleset by framework name (cis, hipaa, pci_dss).
+
+    Bundled rulesets never change at runtime, so results are cached for the
+    life of the process — repeated analyze calls for the same framework
+    don't re-read and re-parse the ruleset JSON file each time.
+    """
     if framework not in _BUNDLED_FRAMEWORKS:
         raise ValueError(f"Unknown compliance framework: {framework}")
     path = _RULESETS_DIR / f"{framework}.json"

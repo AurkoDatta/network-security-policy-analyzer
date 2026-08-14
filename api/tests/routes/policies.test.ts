@@ -3,6 +3,7 @@ import { createApp } from '../../src/app';
 import { clearTestDb, connectTestDb, disconnectTestDb } from '../helpers/testDb';
 import { VALID_FIREWALL_POLICY } from '../helpers/fixtures';
 import * as analyzerClient from '../../src/services/analyzerClient';
+import { clearAnalysisCache } from '../../src/services/analysisCache';
 
 beforeAll(async () => {
   await connectTestDb();
@@ -10,6 +11,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   await clearTestDb();
+  clearAnalysisCache();
   jest.restoreAllMocks();
 });
 
@@ -240,5 +242,38 @@ describe('404 responses for nonexistent policies', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(502);
+  });
+});
+
+describe('analysis result caching', () => {
+  it('reuses the cached analyzer result for repeated analysis of the same unchanged policy', async () => {
+    const app = createApp();
+    const token = await registerAndLogin(app, 'cache@example.com');
+    jest.spyOn(analyzerClient, 'parsePolicyViaAnalyzer').mockResolvedValue([]);
+
+    const uploadRes = await request(app)
+      .post('/api/policies/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .field('name', 'cache-target')
+      .field('source_type', 'firewall')
+      .attach('file', VALID_FIREWALL_POLICY, 'rules.json');
+
+    const analyzeSpy = jest.spyOn(analyzerClient, 'analyzeRulesViaAnalyzer').mockResolvedValue({
+      risk_score: { overall: 7, permissiveness: 0, exposure: 0, compliance_violations: 0, unused: 0 },
+      findings: [],
+    });
+
+    const first = await request(app)
+      .post(`/api/policies/${uploadRes.body._id}/analyze`)
+      .set('Authorization', `Bearer ${token}`);
+    const second = await request(app)
+      .post(`/api/policies/${uploadRes.body._id}/analyze`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(first.body.risk_score.overall).toBe(7);
+    expect(second.body.risk_score.overall).toBe(7);
+    expect(analyzeSpy).toHaveBeenCalledTimes(1);
   });
 });

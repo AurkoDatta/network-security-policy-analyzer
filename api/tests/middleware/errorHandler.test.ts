@@ -44,4 +44,18 @@ describe('errorHandler', () => {
     expect(next).toHaveBeenCalledWith(err);
     expect(res.status).not.toHaveBeenCalled();
   });
+
+  it('logs a structured JSON error with method, path, and message', () => {
+    const res = mockResponse();
+    const next = jest.fn();
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const req = { method: 'GET', path: '/api/policies/1' } as Request;
+
+    errorHandler(new Error('boom'), req, res, next);
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ method: 'GET', path: '/api/policies/1', message: 'boom' }),
+    );
+    consoleSpy.mockRestore();
+  });
 });

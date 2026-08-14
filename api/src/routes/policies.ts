@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { Router, Response } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
@@ -6,6 +7,7 @@ import { env } from '../config/env';
 import { Analysis } from '../models/Analysis';
 import { Policy } from '../models/Policy';
 import { analyzeRulesViaAnalyzer, parsePolicyViaAnalyzer } from '../services/analyzerClient';
+import { buildCacheKey, getCachedAnalysis, setCachedAnalysis } from '../services/analysisCache';
 import { emitProgress } from '../websocket/server';
 
 export const policiesRouter = Router();
@@ -53,6 +55,7 @@ policiesRouter.post(
 
     try {
       const normalized_rules = await parsePolicyViaAnalyzer(req.file.buffer, analyzerSourceType, req.file.originalname);
+      const content_hash = createHash('sha256').update(JSON.stringify(normalized_rules)).digest('hex');
       const policy = await Policy.create({
         user_id: req.userId,
         name,
@@ -60,6 +63,7 @@ policiesRouter.post(
         source_type,
         raw_content: req.file.buffer.toString('utf-8'),
         normalized_rules,
+        content_hash,
         tags: [],
       });
       res.status(201).json(policy);
@@ -115,8 +119,12 @@ policiesRouter.post('/:id/analyze', async (req: AuthenticatedRequest, res: Respo
   const complianceFrameworks = ['cis', 'hipaa', 'pci_dss'];
 
   try {
+    const cacheKey = buildCacheKey(policy.id, policy.content_hash, complianceFrameworks);
+    const cached = getCachedAnalysis(cacheKey);
+
     emitProgress(policy.id, 'sending_to_analyzer', 25);
-    const { risk_score, findings } = await analyzeRulesViaAnalyzer(policy.normalized_rules, complianceFrameworks);
+    const { risk_score, findings } = cached ?? (await analyzeRulesViaAnalyzer(policy.normalized_rules, complianceFrameworks));
+    if (!cached) setCachedAnalysis(cacheKey, { risk_score, findings });
     emitProgress(policy.id, 'scoring_complete', 75);
 
     const analysis = await Analysis.create({
