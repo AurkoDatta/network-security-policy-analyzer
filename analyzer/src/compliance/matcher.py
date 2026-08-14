@@ -17,6 +17,8 @@ def _cidr_matches(rule_value: str, matcher_cidr: str) -> bool:
         matcher_network = ipaddress.ip_network(matcher_cidr, strict=False)
     except ValueError:
         return rule_value == matcher_cidr
+    if rule_network.version != matcher_network.version:
+        return False
     return rule_network.subnet_of(matcher_network) or rule_network == matcher_network
 
 

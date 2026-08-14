@@ -88,3 +88,9 @@ def test_cidr_matches_falls_back_to_string_equality_on_invalid_cidr():
     rule = _rule(source=Endpoint(type="cidr", value="not-a-cidr"))
     compliance_rule = _compliance_rule(source="not-a-cidr")
     assert matches(rule, compliance_rule) is True
+
+
+def test_no_match_when_rule_source_is_ipv4_and_matcher_source_is_ipv6():
+    rule = _rule(source=Endpoint(type="cidr", value="0.0.0.0/0"))
+    compliance_rule = _compliance_rule(protocol=None, ports=None, source="::/0")
+    assert matches(rule, compliance_rule) is False
