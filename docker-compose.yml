@@ -16,16 +16,19 @@ services:
     restart: unless-stopped
     depends_on:
       - mongo
+      - analyzer
     environment:
       # .env's MONGODB_URI points at localhost, which is only correct for
-      # non-Docker local dev. Inside compose, the API must reach Mongo via
-      # the service name instead.
+      # non-Docker local dev. Inside compose, the API must reach Mongo and
+      # the analyzer via their service names instead.
       MONGODB_URI: mongodb://mongo:27017/analyzer
       API_PORT: ${API_PORT}
       JWT_SECRET: ${JWT_SECRET}
       MAX_FILE_SIZE: ${MAX_FILE_SIZE}
       ANALYSIS_TIMEOUT: ${ANALYSIS_TIMEOUT}
       FRONTEND_PORT: ${FRONTEND_PORT}
+      PYTHON_ANALYZER_URL: http://analyzer:8000
+      NODE_ENV: ${NODE_ENV}
     ports:
       - "${API_PORT}:${API_PORT}"
 
