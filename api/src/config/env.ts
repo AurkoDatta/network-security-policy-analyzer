@@ -9,6 +9,8 @@ interface EnvConfig {
   maxFileSize: number;
   analysisTimeout: number;
   frontendPort: number;
+  pythonAnalyzerUrl: string;
+  nodeEnv: string;
 }
 
 function required(name: string, fallback?: string): string {
@@ -26,4 +28,6 @@ export const env: EnvConfig = {
   maxFileSize: Number(required('MAX_FILE_SIZE', '10485760')),
   analysisTimeout: Number(required('ANALYSIS_TIMEOUT', '30')),
   frontendPort: Number(required('FRONTEND_PORT', '3000')),
+  pythonAnalyzerUrl: required('PYTHON_ANALYZER_URL', 'http://localhost:8000'),
+  nodeEnv: required('NODE_ENV', 'development'),
 };
