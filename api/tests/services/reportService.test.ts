@@ -22,4 +22,17 @@ describe('generateReportPdf', () => {
     expect(buffer.length).toBeGreaterThan(0);
     expect(buffer.subarray(0, 4).toString()).toBe('%PDF');
   });
+
+  it('produces a valid PDF when there are no findings', async () => {
+    const policy = { name: 'clean-policy', source_type: 'firewall' } as never;
+    const analysis = {
+      risk_score: { overall: 0, permissiveness: 0, exposure: 0, compliance_violations: 0, unused: 0 },
+      findings: [],
+      generated_at: new Date('2026-01-01'),
+    } as never;
+
+    const buffer = await generateReportPdf(policy, analysis);
+
+    expect(buffer.subarray(0, 4).toString()).toBe('%PDF');
+  });
 });

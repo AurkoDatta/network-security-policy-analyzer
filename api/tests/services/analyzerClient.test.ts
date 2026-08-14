@@ -35,6 +35,20 @@ describe('parsePolicyViaAnalyzer', () => {
       'Unsupported source_type: bogus',
     );
   });
+
+  it('falls back to a generic error when the response body is not valid JSON', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => {
+        throw new Error('not json');
+      },
+    }) as unknown as typeof fetch;
+
+    await expect(parsePolicyViaAnalyzer(Buffer.from('{}'), 'firewall', 'rules.json')).rejects.toThrow(
+      'Analyzer request failed with status 502',
+    );
+  });
 });
 
 describe('analyzeRulesViaAnalyzer', () => {

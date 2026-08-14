@@ -147,6 +147,30 @@ describe('GET /api/analyses/:id', () => {
   });
 });
 
+describe('404 responses for nonexistent analyses', () => {
+  it('returns 404 for GET on a nonexistent analysis', async () => {
+    const app = createApp();
+    const { token } = await registerAndUpload();
+
+    const res = await request(app)
+      .get('/api/analyses/000000000000000000000000')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 for the report of a nonexistent analysis', async () => {
+    const app = createApp();
+    const { token } = await registerAndUpload();
+
+    const res = await request(app)
+      .get('/api/analyses/000000000000000000000000/report')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+});
+
 describe('GET /api/analyses/:id/report', () => {
   it('streams a PDF containing the analysis findings', async () => {
     const app = createApp();

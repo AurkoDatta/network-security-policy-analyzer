@@ -136,3 +136,109 @@ describe('GET /api/policies and ownership isolation', () => {
     expect(res.status).toBe(204);
   });
 });
+
+describe('upload validation and error paths', () => {
+  it('rejects an upload missing required metadata', async () => {
+    const app = createApp();
+    const token = await registerAndLogin(app, 'invalidmeta@example.com');
+
+    const res = await request(app)
+      .post('/api/policies/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .field('source_type', 'firewall')
+      .attach('file', VALID_FIREWALL_POLICY, 'rules.json');
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when the analyzer fails to parse the file', async () => {
+    const app = createApp();
+    const token = await registerAndLogin(app, 'parsefail@example.com');
+    jest.spyOn(analyzerClient, 'parsePolicyViaAnalyzer').mockRejectedValue(new Error('Unsupported source_type'));
+
+    const res = await request(app)
+      .post('/api/policies/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .field('name', 'bad-policy')
+      .field('source_type', 'firewall')
+      .attach('file', VALID_FIREWALL_POLICY, 'rules.json');
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('404 responses for nonexistent policies', () => {
+  it('returns 404 for GET on a nonexistent policy', async () => {
+    const app = createApp();
+    const token = await registerAndLogin(app, 'get404@example.com');
+
+    const res = await request(app)
+      .get('/api/policies/000000000000000000000000')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 for DELETE on a nonexistent policy', async () => {
+    const app = createApp();
+    const token = await registerAndLogin(app, 'delete404@example.com');
+
+    const res = await request(app)
+      .delete('/api/policies/000000000000000000000000')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when analyzing a nonexistent policy', async () => {
+    const app = createApp();
+    const token = await registerAndLogin(app, 'analyze404@example.com');
+
+    const res = await request(app)
+      .post('/api/policies/000000000000000000000000/analyze')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 403 when analyzing another user's policy", async () => {
+    const app = createApp();
+    const tokenA = await registerAndLogin(app, 'analyzeOwnerA@example.com');
+    const tokenB = await registerAndLogin(app, 'analyzeOwnerB@example.com');
+    jest.spyOn(analyzerClient, 'parsePolicyViaAnalyzer').mockResolvedValue([]);
+
+    const uploadRes = await request(app)
+      .post('/api/policies/upload')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .field('name', 'not-yours')
+      .field('source_type', 'firewall')
+      .attach('file', VALID_FIREWALL_POLICY, 'rules.json');
+
+    const res = await request(app)
+      .post(`/api/policies/${uploadRes.body._id}/analyze`)
+      .set('Authorization', `Bearer ${tokenB}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 502 when the analyzer fails during analysis', async () => {
+    const app = createApp();
+    const token = await registerAndLogin(app, 'analyzefail@example.com');
+    jest.spyOn(analyzerClient, 'parsePolicyViaAnalyzer').mockResolvedValue([]);
+
+    const uploadRes = await request(app)
+      .post('/api/policies/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .field('name', 'fails-to-analyze')
+      .field('source_type', 'firewall')
+      .attach('file', VALID_FIREWALL_POLICY, 'rules.json');
+
+    jest.spyOn(analyzerClient, 'analyzeRulesViaAnalyzer').mockRejectedValue(new Error('analyzer unreachable'));
+
+    const res = await request(app)
+      .post(`/api/policies/${uploadRes.body._id}/analyze`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(502);
+  });
+});
