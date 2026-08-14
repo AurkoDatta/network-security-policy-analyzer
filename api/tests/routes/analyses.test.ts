@@ -146,3 +146,35 @@ describe('GET /api/analyses/:id', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('GET /api/analyses/:id/report', () => {
+  it('streams a PDF containing the analysis findings', async () => {
+    const app = createApp();
+    const { token, policyId } = await registerAndUpload();
+
+    jest.spyOn(analyzerClient, 'analyzeRulesViaAnalyzer').mockResolvedValue({
+      risk_score: { overall: 10, permissiveness: 0, exposure: 0, compliance_violations: 0, unused: 0 },
+      findings: [
+        {
+          type: 'overly_permissive',
+          severity: 'high',
+          rule_id: 'r1',
+          description: 'Allows traffic from 0.0.0.0/0',
+          recommendation: 'Restrict the source CIDR.',
+        },
+      ],
+    });
+
+    const analyzeRes = await request(app)
+      .post(`/api/policies/${policyId}/analyze`)
+      .set('Authorization', `Bearer ${token}`);
+
+    const res = await request(app)
+      .get(`/api/analyses/${analyzeRes.body._id}/report`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.body.subarray(0, 4).toString()).toBe('%PDF');
+  });
+});
