@@ -4,7 +4,7 @@ A full-stack security analysis tool for identifying misconfigurations, overly pe
 
 ## Features
 
-- **Policy Upload & Parsing:** Support AWS Security Groups, GCP Firewall rules, and generic YAML/JSON formats
+- **Policy Upload & Parsing:** Support AWS Security Groups, generic YAML/JSON firewall rules (also covers GCP-style exports), and IAM policies
 - **Automated Analysis:** Detect permissiveness (0.0.0.0/0), conflicts, redundancy, and compliance violations
 - **Risk Scoring:** Multi-dimensional severity assessment (permissiveness, exposure, compliance)
 - **Interactive Dashboard:** Results table, network visualization, compliance charts
@@ -150,13 +150,12 @@ network-security-policy-analyzer/
 
 ### Analysis
 - `POST /api/policies/:id/analyze` - Trigger analysis
-- `WS /ws/analyze/:id` - Real-time progress updates
+- `WS` (Socket.io, path `/ws/analyze`, join room by policy ID) - Real-time progress updates
 - `GET /api/analyses/:id` - Get analysis results
 - `GET /api/analyses/:id/report` - Generate PDF report
 
 ### Compliance
-- `GET /api/compliance-rules` - List compliance frameworks
-- `POST /api/compliance-rules` - Create custom rule
+- `GET /api/compliance-rules` - not yet implemented; CIS/HIPAA/PCI-DSS frameworks are used directly by the analyze endpoint
 
 See `/docs/api.md` for detailed endpoint documentation.
 
