@@ -27,6 +27,7 @@ class NormalizedRule(BaseModel):
     protocol: str
     port_range: Optional[PortRange] = None
     direction: Literal["ingress", "egress"]
+    action: Literal["allow", "deny"] = "allow"
 
     source: Endpoint
     destination: Endpoint

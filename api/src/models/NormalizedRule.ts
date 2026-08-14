@@ -18,6 +18,7 @@ export interface NormalizedRule {
   protocol: string;
   port_range: PortRange | null;
   direction: 'ingress' | 'egress';
+  action: 'allow' | 'deny';
 
   source: Endpoint;
   destination: Endpoint;
@@ -69,6 +70,7 @@ export const NormalizedRuleSchema = new Schema<NormalizedRule>(
     protocol: { type: String, required: true },
     port_range: { type: PortRangeSchema, default: null },
     direction: { type: String, enum: ['ingress', 'egress'], required: true },
+    action: { type: String, enum: ['allow', 'deny'], required: true, default: 'allow' },
 
     source: { type: EndpointSchema, required: true },
     destination: { type: EndpointSchema, required: true },
