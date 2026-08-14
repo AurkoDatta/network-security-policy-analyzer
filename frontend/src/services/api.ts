@@ -1,4 +1,5 @@
 import { apiFetch } from '../lib/apiClient';
+import type { Policy } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
 
@@ -22,4 +23,16 @@ export async function registerUser(
   name?: string,
 ): Promise<{ token: string }> {
   return apiFetch('/api/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) });
+}
+
+export async function listPolicies(token: string): Promise<Policy[]> {
+  return apiFetch('/api/policies', {}, token);
+}
+
+export async function uploadPolicy(token: string, formData: FormData): Promise<Policy> {
+  return apiFetch('/api/policies/upload', { method: 'POST', body: formData }, token);
+}
+
+export async function deletePolicy(token: string, id: string): Promise<void> {
+  return apiFetch(`/api/policies/${id}`, { method: 'DELETE' }, token);
 }
