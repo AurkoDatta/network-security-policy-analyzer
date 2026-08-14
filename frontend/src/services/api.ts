@@ -1,5 +1,5 @@
 import { apiFetch } from '../lib/apiClient';
-import type { Policy } from '../types/api';
+import type { Analysis, Policy } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
 
@@ -35,4 +35,12 @@ export async function uploadPolicy(token: string, formData: FormData): Promise<P
 
 export async function deletePolicy(token: string, id: string): Promise<void> {
   return apiFetch(`/api/policies/${id}`, { method: 'DELETE' }, token);
+}
+
+export async function getAnalysis(token: string, id: string): Promise<Analysis> {
+  return apiFetch(`/api/analyses/${id}`, {}, token);
+}
+
+export async function triggerAnalysis(token: string, policyId: string): Promise<Analysis> {
+  return apiFetch(`/api/policies/${policyId}/analyze`, { method: 'POST' }, token);
 }
