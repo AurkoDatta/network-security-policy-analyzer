@@ -4,6 +4,8 @@ import { useAnalysis } from '../hooks/useAnalysis';
 import { FindingsTable } from '../components/FindingsTable';
 import { FindingFilters } from '../components/FindingFilters';
 import { RuleDetailPanel } from '../components/RuleDetailPanel';
+import { RiskGauge } from '../components/RiskGauge';
+import { ComplianceChart } from '../components/ComplianceChart';
 import type { Finding, NormalizedRule } from '../types/api';
 
 export function AnalysisPage() {
@@ -24,6 +26,10 @@ export function AnalysisPage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
       <h1 className="text-2xl font-semibold">Analysis</h1>
+      <div className="grid grid-cols-2 gap-4">
+        <RiskGauge score={analysis.risk_score} />
+        <ComplianceChart findings={analysis.findings} />
+      </div>
       <FindingFilters findings={analysis.findings} onFilterChange={setFiltered} />
       <FindingsTable findings={filtered} onSelect={handleSelect} />
       <RuleDetailPanel rule={selectedRule} onClose={() => setSelectedRule(null)} />
