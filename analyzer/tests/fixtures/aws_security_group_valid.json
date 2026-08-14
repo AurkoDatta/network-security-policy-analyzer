@@ -1,0 +1,29 @@
+[
+  {
+    "GroupId": "sg-0123456789abcdef0",
+    "GroupName": "web-servers",
+    "IpPermissions": [
+      {
+        "IpProtocol": "tcp",
+        "FromPort": 22,
+        "ToPort": 22,
+        "IpRanges": [{ "CidrIp": "0.0.0.0/0", "Description": "SSH from anywhere" }]
+      },
+      {
+        "IpProtocol": "tcp",
+        "FromPort": 443,
+        "ToPort": 443,
+        "IpRanges": [{ "CidrIp": "10.0.0.0/8" }],
+        "Ipv6Ranges": [{ "CidrIpv6": "::/0" }]
+      }
+    ],
+    "IpPermissionsEgress": [
+      {
+        "IpProtocol": "-1",
+        "FromPort": -1,
+        "ToPort": -1,
+        "IpRanges": [{ "CidrIp": "0.0.0.0/0" }]
+      }
+    ]
+  }
+]
